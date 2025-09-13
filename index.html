@@ -4,22 +4,19 @@
   <meta charset="UTF-8">
   <title>🚀 NASA API Explorer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Tailwind + Animate -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body class="bg-gray-900 text-white font-sans">
   <header class="bg-gray-800 p-4 text-center text-2xl font-bold shadow-lg">
     🚀 NASA API Explorer
   </header>
 
-  <nav class="flex flex-wrap justify-center gap-3 p-4 bg-gray-800 shadow-md sticky top-0 z-10">
+  <nav class="flex flex-wrap justify-center gap-3 p-4 bg-gray-800 sticky top-0 z-10">
     <button class="btn" onclick="loadAPOD()">APOD</button>
     <button class="btn" onclick="loadMars()">Mars Rover</button>
     <button class="btn" onclick="loadAsteroids()">Asteroids</button>
     <button class="btn" onclick="loadEarth()">Earth Assets</button>
     <button class="btn" onclick="loadEPIC()">EPIC</button>
-    <button class="btn" onclick="loadExoplanet()">Exoplanets</button>
     <button class="btn" onclick="loadLibrary()">Media Library</button>
   </nav>
 
@@ -30,15 +27,13 @@
   </main>
 
   <style>
-    .btn {
-      @apply px-4 py-2 rounded-lg bg-teal-500 text-black font-semibold hover:bg-teal-400 transition;
-    }
+    .btn { @apply px-4 py-2 rounded-lg bg-teal-500 text-black font-semibold hover:bg-teal-400 transition; }
     .animate-fadeIn { animation: fadeIn 0.6s ease-in-out; }
     @keyframes fadeIn { from {opacity:0;transform:translateY(10px);} to {opacity:1;transform:translateY(0);} }
   </style>
 
 <script>
-const API_KEY = "hiJb1dhZj7g7e7Uq0bPCzD5P579xvroRFeUoJGp7"; // API key đã dán sẵn
+const API_KEY = "hiJb1dhZj7g7e7Uq0bPCzD5P579xvroRFeUoJGp7"; // API key
 
 // === Astronomy Picture of the Day ===
 async function loadAPOD() {
@@ -46,7 +41,7 @@ async function loadAPOD() {
   const data = await res.json();
   document.getElementById("content").innerHTML = `
     <h2 class="text-2xl font-bold mb-2">${data.title}</h2>
-    <p class="mb-2">${data.date}</p>
+    <p>${data.date}</p>
     ${data.media_type === "video" 
       ? `<iframe class="w-full h-96 rounded-lg" src="${data.url}" frameborder="0"></iframe>` 
       : `<img src="${data.url}" class="rounded-lg shadow-lg mx-auto"/>`}
@@ -58,6 +53,10 @@ async function loadAPOD() {
 async function loadMars() {
   const res = await fetch(`https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?sol=1000&api_key=${API_KEY}`);
   const data = await res.json();
+  if (!data.photos.length) {
+    document.getElementById("content").innerHTML = "<p>No photos available</p>";
+    return;
+  }
   const photo = data.photos[0];
   document.getElementById("content").innerHTML = `
     <h2 class="text-2xl font-bold mb-2">Mars Rover: ${photo.rover.name}</h2>
@@ -85,6 +84,10 @@ async function loadEarth() {
   const lat = 1.5, lon = 100.75;
   const res = await fetch(`https://api.nasa.gov/planetary/earth/assets?lon=${lon}&lat=${lat}&date=2018-01-01&dim=0.1&api_key=${API_KEY}`);
   const data = await res.json();
+  if (!data.url) {
+    document.getElementById("content").innerHTML = "<p>No Earth image found</p>";
+    return;
+  }
   document.getElementById("content").innerHTML = `
     <h2 class="text-2xl font-bold mb-2">Earth Assets</h2>
     <p>Date: ${data.date}</p>
@@ -96,25 +99,18 @@ async function loadEarth() {
 async function loadEPIC() {
   const res = await fetch(`https://api.nasa.gov/EPIC/api/natural/images?api_key=${API_KEY}`);
   const data = await res.json();
+  if (!data.length) {
+    document.getElementById("content").innerHTML = "<p>No EPIC images found</p>";
+    return;
+  }
   const img = data[0];
-  const date = img.date.split(" ")[0].replace(/-/g, "/");
-  const url = `https://epic.gsfc.nasa.gov/archive/natural/${date}/png/${img.image}.png`;
+  const d = new Date(img.date);
+  const datePath = `${d.getUTCFullYear()}/${String(d.getUTCMonth()+1).padStart(2,"0")}/${String(d.getUTCDate()).padStart(2,"0")}`;
+  const url = `https://epic.gsfc.nasa.gov/archive/natural/${datePath}/png/${img.image}.png`;
   document.getElementById("content").innerHTML = `
     <h2 class="text-2xl font-bold mb-2">EPIC Earth Image</h2>
     <p>Date: ${img.date}</p>
     <img src="${url}" class="rounded-lg shadow-lg"/>
-  `;
-}
-
-// === Exoplanet Archive ===
-async function loadExoplanet() {
-  const res = await fetch(`https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,discoverymethod,disc_year,pl_rade,pl_bmasse,pl_orbper+from+ps&format=json`);
-  const data = await res.json();
-  const planet = data[0];
-  document.getElementById("content").innerHTML = `
-    <h2 class="text-2xl font-bold mb-2">Exoplanet: ${planet.pl_name}</h2>
-    <p>Discovery: ${planet.discoverymethod} (${planet.disc_year})</p>
-    <p>Radius: ${planet.pl_rade} Earth | Mass: ${planet.pl_bmasse} Earth | Orbital Period: ${planet.pl_orbper} days</p>
   `;
 }
 
