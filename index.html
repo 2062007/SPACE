@@ -2,134 +2,244 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>🚀 NASA API Explorer</title>
+  <title>🚀 NASA Explorer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-900 text-white font-sans">
-  <header class="bg-gray-800 p-4 text-center text-2xl font-bold shadow-lg">
-    🚀 NASA API Explorer
-  </header>
-
-  <nav class="flex flex-wrap justify-center gap-3 p-4 bg-gray-800 sticky top-0 z-10">
-    <button class="btn" onclick="loadAPOD()">APOD</button>
-    <button class="btn" onclick="loadMars()">Mars Rover</button>
-    <button class="btn" onclick="loadAsteroids()">Asteroids</button>
-    <button class="btn" onclick="loadEarth()">Earth Assets</button>
-    <button class="btn" onclick="loadEPIC()">EPIC</button>
-    <button class="btn" onclick="loadLibrary()">Media Library</button>
-  </nav>
-
-  <main class="max-w-5xl mx-auto p-6">
-    <div id="content" class="animate-fadeIn">
-      <h2 class="text-xl font-semibold text-center">🔭 Chọn 1 API để bắt đầu...</h2>
-    </div>
-  </main>
-
   <style>
-    .btn { @apply px-4 py-2 rounded-lg bg-teal-500 text-black font-semibold hover:bg-teal-400 transition; }
-    .animate-fadeIn { animation: fadeIn 0.6s ease-in-out; }
-    @keyframes fadeIn { from {opacity:0;transform:translateY(10px);} to {opacity:1;transform:translateY(0);} }
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #0b0c10, #1f2833);
+      color: #fff;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      text-align: center;
+      padding: 20px;
+      background: #0b0c10;
+      border-bottom: 2px solid #45a29e;
+    }
+    header h1 { color: #66fcf1; }
+    section {
+      margin: 20px auto;
+      padding: 20px;
+      background: #1f2833;
+      border-radius: 10px;
+      max-width: 900px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+    section h2 { color: #66fcf1; margin-bottom: 10px; }
+    select, input, button {
+      margin: 5px;
+      padding: 8px;
+      border-radius: 6px;
+      border: none;
+      outline: none;
+    }
+    button {
+      background: #45a29e;
+      color: #fff;
+      cursor: pointer;
+    }
+    button:hover { background: #66fcf1; }
+    .result {
+      margin-top: 15px;
+      padding: 10px;
+      background: #0b0c10;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+    img, video {
+      max-width: 100%;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
   </style>
+</head>
+<body>
+<header>
+  <h1>🚀 NASA Explorer – Full Features</h1>
+  <p>Powered by NASA Open APIs</p>
+</header>
+
+<!-- ========== APOD ========== -->
+<section>
+  <h2>🌌 Astronomy Picture of the Day (APOD)</h2>
+  <select id="apod-year"><option value="">Year</option></select>
+  <select id="apod-month"><option value="">Month</option></select>
+  <select id="apod-day"><option value="">Day</option></select>
+  <button onclick="loadAPOD()">Load APOD</button>
+  <div id="apod-result" class="result"></div>
+</section>
+
+<!-- ========== Mars Rover ========== -->
+<section>
+  <h2>🤖 Mars Rover Photos</h2>
+  <label>Rover:</label>
+  <select id="rover">
+    <option value="curiosity">Curiosity (2012)</option>
+    <option value="opportunity">Opportunity (2004)</option>
+    <option value="spirit">Spirit (2004)</option>
+    <option value="perseverance">Perseverance (2021)</option>
+  </select><br>
+  <select id="mars-year"><option value="">Year</option></select>
+  <select id="mars-month"><option value="">Month</option></select>
+  <select id="mars-day"><option value="">Day</option></select>
+  <button onclick="loadMars()">Load Photos</button>
+  <div id="mars-result" class="result"></div>
+</section>
+
+<!-- ========== EPIC ========== -->
+<section>
+  <h2>🌍 EPIC Earth Images</h2>
+  <button onclick="loadEPIC()">Load Latest EPIC</button>
+  <div id="epic-result" class="result"></div>
+</section>
+
+<!-- ========== NeoWs ========== -->
+<section>
+  <h2>☄️ Near Earth Objects (NeoWs)</h2>
+  <p>Select Start Date (End = +7 days max)</p>
+  <select id="neo-year"><option value="">Year</option></select>
+  <select id="neo-month"><option value="">Month</option></select>
+  <select id="neo-day"><option value="">Day</option></select>
+  <button onclick="loadNEO()">Load NEOs</button>
+  <div id="neo-result" class="result"></div>
+</section>
+
+<!-- ========== Earth Assets ========== -->
+<section>
+  <h2>🛰 Earth Assets</h2>
+  <input id="lat" type="number" step="0.01" placeholder="Latitude">
+  <input id="lon" type="number" step="0.01" placeholder="Longitude"><br>
+  <select id="earth-year"><option value="">Year</option></select>
+  <select id="earth-month"><option value="">Month</option></select>
+  <select id="earth-day"><option value="">Day</option></select>
+  <button onclick="loadEarth()">Load Assets</button>
+  <div id="earth-result" class="result"></div>
+</section>
 
 <script>
-const API_KEY = "hiJb1dhZj7g7e7Uq0bPCzD5P579xvroRFeUoJGp7"; // API key đã dán sẵn
+const API_KEY = "DEMO_KEY";
 
-// === Astronomy Picture of the Day ===
-async function loadAPOD() {
-  const res = await fetch(`https://api.nasa.gov/planetary/apod?api_key=${API_KEY}`);
-  const data = await res.json();
-  document.getElementById("content").innerHTML = `
-    <h2 class="text-2xl font-bold mb-2">${data.title}</h2>
-    <p>${data.date}</p>
-    ${data.media_type === "video"
-      ? `<iframe class="w-full h-96 rounded-lg" src="${data.url}" frameborder="0"></iframe>`
-      : `<img src="${data.url}" class="rounded-lg shadow-lg mx-auto"/>`}
-    <p class="mt-4 text-justify">${data.explanation}</p>
-  `;
-}
-
-// === Mars Rover Photos ===
-async function loadMars() {
-  const res = await fetch(`https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?sol=1000&api_key=${API_KEY}`);
-  const data = await res.json();
-  if (!data.photos.length) {
-    document.getElementById("content").innerHTML = "<p>No photos available</p>";
-    return;
+// Helper: create options for select
+function fillSelect(select, start, end) {
+  for (let i=start;i<=end;i++) {
+    let opt=document.createElement("option");
+    opt.value=i; opt.textContent=i;
+    select.appendChild(opt);
   }
-  const photo = data.photos[0];
-  document.getElementById("content").innerHTML = `
-    <h2 class="text-2xl font-bold mb-2">Mars Rover: ${photo.rover.name}</h2>
-    <p>Camera: ${photo.camera.full_name} | Date: ${photo.earth_date}</p>
-    <img src="${photo.img_src}" class="rounded-lg shadow-lg mt-2"/>
-  `;
 }
 
-// === Asteroids (NeoWs) ===
-async function loadAsteroids() {
-  // Lấy dữ liệu trong 1 ngày cụ thể để tránh trả về rỗng
-  const today = new Date().toISOString().split("T")[0];
-  const res = await fetch(`https://api.nasa.gov/neo/rest/v1/feed?start_date=${today}&end_date=${today}&api_key=${API_KEY}`);
-  const data = await res.json();
-  const astList = data.near_earth_objects[today];
-  if (!astList || !astList.length) {
-    document.getElementById("content").innerHTML = "<p>No asteroid data found</p>";
-    return;
-  }
-  const ast = astList[0];
-  document.getElementById("content").innerHTML = `
-    <h2 class="text-2xl font-bold mb-2">Asteroid: ${ast.name}</h2>
-    <p>Size: ${ast.estimated_diameter.meters.estimated_diameter_max.toFixed(2)} m</p>
-    <p>Hazardous: ${ast.is_potentially_hazardous_asteroid ? "⚠️ Yes" : "✅ No"}</p>
-    <pre class="bg-gray-800 p-3 rounded mt-2 overflow-x-auto">${JSON.stringify(ast, null, 2)}</pre>
-  `;
+// APOD init
+const apodYear=document.getElementById("apod-year");
+const apodMonth=document.getElementById("apod-month");
+const apodDay=document.getElementById("apod-day");
+fillSelect(apodYear,1995,new Date().getFullYear());
+fillSelect(apodMonth,1,12);
+fillSelect(apodDay,1,31);
+
+function loadAPOD(){
+  const y=apodYear.value,m=apodMonth.value,d=apodDay.value;
+  if(!y||!m||!d) return alert("Chọn đủ date!");
+  let date=`${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+  fetch(`https://api.nasa.gov/planetary/apod?api_key=${API_KEY}&date=${date}`)
+  .then(r=>r.json()).then(data=>{
+    let html=`<h3>${data.title}</h3><p>${data.date}</p><p>${data.explanation}</p>`;
+    if(data.media_type==="image") html+=`<img src="${data.url}">`;
+    else html+=`<iframe src="${data.url}" width="100%" height="400"></iframe>`;
+    document.getElementById("apod-result").innerHTML=html;
+  });
 }
 
-// === Earth Assets ===
-async function loadEarth() {
-  const lat = 1.5, lon = 100.75;
-  const res = await fetch(`https://api.nasa.gov/planetary/earth/assets?lon=${lon}&lat=${lat}&date=2018-01-01&dim=0.1&api_key=${API_KEY}`);
-  const data = await res.json();
-  if (!data.url) {
-    document.getElementById("content").innerHTML = "<p>No Earth image found</p>";
-    return;
-  }
-  document.getElementById("content").innerHTML = `
-    <h2 class="text-2xl font-bold mb-2">Earth Assets</h2>
-    <p>Date: ${data.date}</p>
-    <img src="${data.url}" class="rounded-lg shadow-lg"/>
-  `;
+// Mars Rover init
+const marsYear=document.getElementById("mars-year");
+const marsMonth=document.getElementById("mars-month");
+const marsDay=document.getElementById("mars-day");
+fillSelect(marsYear,2004,new Date().getFullYear());
+fillSelect(marsMonth,1,12);
+fillSelect(marsDay,1,31);
+
+function loadMars(){
+  const rover=document.getElementById("rover").value;
+  const y=marsYear.value,m=marsMonth.value,d=marsDay.value;
+  if(!y||!m||!d) return alert("Chọn đủ date!");
+  let date=`${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+  fetch(`https://api.nasa.gov/mars-photos/api/v1/rovers/${rover}/photos?earth_date=${date}&api_key=${API_KEY}`)
+  .then(r=>r.json()).then(data=>{
+    if(!data.photos.length){ 
+      document.getElementById("mars-result").innerHTML="No photos this day!";
+      return;
+    }
+    let html="";
+    data.photos.slice(0,5).forEach(p=>{
+      html+=`<img src="${p.img_src}"><p>${p.rover.name} - ${p.camera.full_name}</p>`;
+    });
+    document.getElementById("mars-result").innerHTML=html;
+  });
 }
 
-// === EPIC (Earth Polychromatic Camera) ===
-async function loadEPIC() {
-  const res = await fetch(`https://api.nasa.gov/EPIC/api/natural/images?api_key=${API_KEY}`);
-  const data = await res.json();
-  if (!data.length) {
-    document.getElementById("content").innerHTML = "<p>No EPIC images found</p>";
-    return;
-  }
-  const img = data[0];
-  const d = new Date(img.date);
-  const datePath = `${d.getUTCFullYear()}/${String(d.getUTCMonth()+1).padStart(2,"0")}/${String(d.getUTCDate()).padStart(2,"0")}`;
-  const url = `https://epic.gsfc.nasa.gov/archive/natural/${datePath}/png/${img.image}.png`;
-  document.getElementById("content").innerHTML = `
-    <h2 class="text-2xl font-bold mb-2">EPIC Earth Image</h2>
-    <p>Date: ${img.date}</p>
-    <img src="${url}" class="rounded-lg shadow-lg"/>
-  `;
+// EPIC
+function loadEPIC(){
+  fetch(`https://api.nasa.gov/EPIC/api/natural?api_key=${API_KEY}`)
+  .then(r=>r.json()).then(data=>{
+    if(!data.length) return;
+    let latest=data[0];
+    let date=latest.date.split(" ")[0].replace(/-/g,"/");
+    let img=`https://epic.gsfc.nasa.gov/archive/natural/${date}/png/${latest.image}.png`;
+    document.getElementById("epic-result").innerHTML=`<h3>${latest.date}</h3><img src="${img}">`;
+  });
 }
 
-// === NASA Media Library ===
-async function loadLibrary() {
-  const res = await fetch(`https://images-api.nasa.gov/search?q=galaxy&media_type=image`);
-  const data = await res.json();
-  const item = data.collection.items[0];
-  document.getElementById("content").innerHTML = `
-    <h2 class="text-2xl font-bold mb-2">NASA Media Library</h2>
-    <p>${item.data[0].title}</p>
-    <img src="${item.links[0].href}" class="rounded-lg shadow-lg"/>
-  `;
+// NEO
+const neoYear=document.getElementById("neo-year");
+const neoMonth=document.getElementById("neo-month");
+const neoDay=document.getElementById("neo-day");
+fillSelect(neoYear,2000,new Date().getFullYear());
+fillSelect(neoMonth,1,12);
+fillSelect(neoDay,1,31);
+
+function loadNEO(){
+  const y=neoYear.value,m=neoMonth.value,d=neoDay.value;
+  if(!y||!m||!d) return alert("Chọn đủ date!");
+  let start=`${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+  fetch(`https://api.nasa.gov/neo/rest/v1/feed?start_date=${start}&api_key=${API_KEY}`)
+  .then(r=>r.json()).then(data=>{
+    let list=[];
+    for(let date in data.near_earth_objects){
+      data.near_earth_objects[date].forEach(neo=>{
+        list.push(`${date}: ${neo.name} (mag ${neo.absolute_magnitude_h})`);
+      });
+    }
+    document.getElementById("neo-result").innerHTML="<pre>"+list.slice(0,10).join("\n")+"</pre>";
+  });
+}
+
+// Earth Assets
+const earthYear=document.getElementById("earth-year");
+const earthMonth=document.getElementById("earth-month");
+const earthDay=document.getElementById("earth-day");
+fillSelect(earthYear,2010,new Date().getFullYear());
+fillSelect(earthMonth,1,12);
+fillSelect(earthDay,1,31);
+
+function loadEarth(){
+  const lat=document.getElementById("lat").value;
+  const lon=document.getElementById("lon").value;
+  const y=earthYear.value,m=earthMonth.value,d=earthDay.value;
+  if(!lat||!lon||!y||!m||!d) return alert("Điền lat/lon + date!");
+  let begin=`${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+  fetch(`https://api.nasa.gov/planetary/earth/assets?lon=${lon}&lat=${lat}&begin=${begin}&api_key=${API_KEY}`)
+  .then(r=>r.json()).then(data=>{
+    if(!data.results||!data.results.length){
+      document.getElementById("earth-result").innerHTML="No assets found!";
+      return;
+    }
+    let html="";
+    data.results.slice(0,5).forEach(item=>{
+      html+=`<p>${item.date}</p><img src="${item.url}">`;
+    });
+    document.getElementById("earth-result").innerHTML=html;
+  });
 }
 </script>
 </body>
